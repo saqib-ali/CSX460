@@ -22,13 +22,15 @@ Write a function (f) that takes a vector of numbers, **x**, and returns a vector
 ### Solution 
 
 ```{r}
-x <- c( 1, 5, 2, 8) 
+x <- c( 1, 5, 2, 8)
+y <- c( 1, 5, 2, 0)
 
-prod(x)/x
+f <- function(x){
+  ifelse(x!=0,prod(x)/x,prod(subset(x,x!=0)))
+}
 
-
-
-
+f(x)
+f(y)
 ```
     
 
