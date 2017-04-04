@@ -2,7 +2,9 @@
 title: "01-exercises"
 author: "Saqib Ali"
 date: "April 2, 2017"
-output: html_document
+output: pdf_document
+#output: pdf_document
+
 ---
 
 
@@ -53,9 +55,9 @@ Write a function f(x) to accept an integer vector, and returns a vector with tho
 
 ```{r}
 
-x <- 1:200000
+x <- 1:20
 ######## Method 1
-f1 <- function(x) {
+f <- function(x) {
   x[as.numeric(x)%%3==0 & as.numeric(x)%%5==0] <- "FizzBuzz"
   x[as.numeric(x)%%3==0] <- "Fizz"
   x[as.numeric(x)%%5==0] <- "Buzz"
@@ -76,9 +78,9 @@ f2 <- function(x){
 
 
 #### Testing
-f1(x)
+f(x)
 f2(x)
 
 
-all.equal(f1(x), f2(x))
+all.equal(f(x), f2(x))
 ```
