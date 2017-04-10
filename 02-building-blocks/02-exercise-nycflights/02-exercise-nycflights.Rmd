@@ -33,6 +33,8 @@ Using the `readr` package read the `flights` data.
 
 flights <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv")
 
+
+str(flights)
 planes <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")
 airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")
 weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv")
@@ -48,8 +50,21 @@ Plot a histogram of arrival delays and departure delays
 
 ```{r}
 
-ggplot(flights, aes(x = dep_delay, x=arr_delay)) +
-        geom_histogram()
+library(reshape2)
+
+
+
+delays = flights[,c("dep_delay", "arr_delay")]
+
+print(delays)
+
+melt(delays)
+
+#ggplot(data = iris2) +
+#  geom_histogram(aes(x = value, y=(..count..)/sum(..count..), fill=variable), 
+#                 alpha=0.3, binwidth=2, position="identity")
+
+
 ```
 
 ## Scatterplot
@@ -83,14 +98,9 @@ flights %>% group_by(origin, carrier) %>% summarise(total.count=n())
 
 ```{r}
 
+data.joined <- flights %>% left_join(planes, by = "tailnum") %>%  left_join(airports, c("dest"="faa")) %>%  left_join(airports, c("origin"="faa")) %>% left_join(weather, by = c('time_hour'='time_hour', 'origin'='origin'))
 
-#flights %>% left_join(planes, by = "tailnum") %>% left_join(weather, by ="time_hour") %>%  left_join(airports, c("dest"="faa"))
-
-df_flights <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv")
-
-df_planes <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")
-df_airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")
-df_weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv")
+str(data.joined)
 
 
 ```
