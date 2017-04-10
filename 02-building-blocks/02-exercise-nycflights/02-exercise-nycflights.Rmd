@@ -7,6 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+
+library("tidyverse")
+library("ggplot2")
+library("lubridate")
+library("dplyr")
 ```
 
 ## NYC Flight Data
@@ -25,7 +31,15 @@ Using the `readr` package read the `flights` data.
 
 ```{r}
 
+flights <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv")
 
+planes <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")
+airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")
+weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv")
+
+
+#flights <- flights[1:10,]
+print(flights)
 ```
 
 ## Numeric Variables  
@@ -34,6 +48,8 @@ Plot a histogram of arrival delays and departure delays
 
 ```{r}
 
+ggplot(flights, aes(x = dep_delay, x=arr_delay)) +
+        geom_histogram()
 ```
 
 ## Scatterplot
@@ -41,6 +57,9 @@ Plot a histogram of arrival delays and departure delays
 Plot a scatterplot of date vs arrival delay 
 
 ```{r}
+
+ggplot(flights, aes(x=time_hour, y=arr_delay)) +
+    geom_point(shape=1)  
 
 ```
 
@@ -52,6 +71,8 @@ Create a `table`, counting the flights by origin airports and carrier.
 
 ```{r}
 
+flights %>% group_by(origin, carrier) %>% summarise(total.count=n())
+
 
 ```
 
@@ -61,6 +82,16 @@ Create a `table`, counting the flights by origin airports and carrier.
 **Read** in the other data sets. Use methods to join the data together to create a single table containing one record per row.  (HINT: see `?data.table` or `?dplyr::join`)
 
 ```{r}
+
+
+#flights %>% left_join(planes, by = "tailnum") %>% left_join(weather, by ="time_hour") %>%  left_join(airports, c("dest"="faa"))
+
+df_flights <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv")
+
+df_planes <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")
+df_airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")
+df_weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv")
+
 
 ```
 
