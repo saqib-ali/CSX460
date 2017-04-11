@@ -72,8 +72,10 @@ melt(delays)
 Plot a scatterplot of date vs arrival delay 
 
 ```{r}
+form.dates <- ymd(paste(flights$year, flights$month, flights$day, sep = "-"))
+flights$date <- form.dates
 
-ggplot(flights, aes(x=time_hour, y=arr_delay)) +
+ggplot(flights, aes(x=date, y=arr_delay)) +
     geom_point(shape=1)  
 
 ```
