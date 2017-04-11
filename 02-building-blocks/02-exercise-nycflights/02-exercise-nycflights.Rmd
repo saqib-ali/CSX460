@@ -56,9 +56,9 @@ library(reshape2)
 
 delays = flights[,c("dep_delay", "arr_delay")]
 
-print(delays)
+ggplot(data=flights, aes(flights$dep_delay)) + geom_histogram(binwidth = 1)
+ggplot(data=flights, aes(flights$arr_delay)) + geom_histogram(binwidth = 1)
 
-melt(delays)
 
 #ggplot(data = iris2) +
 #  geom_histogram(aes(x = value, y=(..count..)/sum(..count..), fill=variable), 
