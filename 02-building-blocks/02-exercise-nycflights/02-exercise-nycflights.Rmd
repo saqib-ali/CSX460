@@ -1,4 +1,4 @@
----
+bv---
 title: "Assingment NYC Flight Data"
 author: "Your Name Here"
 date: "October 5, 2016"
@@ -40,8 +40,6 @@ airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nyc
 weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv")
 
 
-#flights <- flights[1:10,]
-print(flights)
 ```
 
 ## Numeric Variables  
@@ -56,8 +54,8 @@ library(reshape2)
 
 delays = flights[,c("dep_delay", "arr_delay")]
 
-ggplot(data=flights, aes(flights$dep_delay)) + geom_histogram(binwidth = 1)
-ggplot(data=flights, aes(flights$arr_delay)) + geom_histogram(binwidth = 1)
+ggplot(data=flights, aes(flights$dep_delay)) + geom_histogram(binwidth = .5)
+ggplot(data=flights, aes(flights$arr_delay)) + geom_histogram(binwidth = .5)
 
 
 #ggplot(data = iris2) +
@@ -76,7 +74,7 @@ form.dates <- ymd(paste(flights$year, flights$month, flights$day, sep = "-"))
 flights$date <- form.dates
 
 ggplot(flights, aes(x=date, y=arr_delay)) +
-    geom_point(shape=1)  
+    geom_point()  
 
 ```
 
