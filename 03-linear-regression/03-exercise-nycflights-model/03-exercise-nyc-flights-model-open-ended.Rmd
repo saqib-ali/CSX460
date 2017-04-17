@@ -7,6 +7,13 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+
+library("tidyverse")
+library("ggplot2")
+library("lubridate")
+library("dplyr")
+library("data.table")
 ```
 
 # NYCFlights Model
@@ -24,12 +31,87 @@ Break the process down into steps and create a codeblock for each step.
 ## Step 1: [Step Name] 
 
 ```{r "Step 1: [Step Name]" }
+flights <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv")
+planes <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")
+airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")
+weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv")
+
+
+planes <- setnames(planes, old = c('year'), new = c('manufacture_year'))
+
+flights <- flights %>% select(., -time_hour) 
+weather <- weather %>% select(., -time_hour) 
+
+
+
+head(flights)
+form.dep_hour <- round(flights$sched_dep_time /100)
+flights$dep_hour <- form.dep_hour
+
+head(flights)
+```
+```{r}
+
+
+
+form.dep_hour <- round(flights$sched_dep_time /100)
+flights$dep_hour <- form.dep_hour
+
+dim (flights)
+
+data.joined <- flights %>% left_join(planes, by = c('tailnum' = 'tailnum')) %>%  left_join(airports, c("dest"="faa"))  %>% left_join(weather, by = c('year'='year', 'month'='month', 'day'='day', 'dep_hour'='hour', 'origin'='origin')) 
+
+dim(data.joined)
+
+str(data.joined)
+
+#lapply(data.joined, levels)
+
+
+# %>%  left_join(airports, c("origin"="faa")) 
+
+
+```
+
+
+```{r}
+data.joined.sample <- sample_frac(data.joined, 1)
+
+fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + dewp + humid + wind_dir + wind_speed + wind_gust + precip + pressure + visib ,  data=data.joined.sample)
+summary(fit)
 
 ```
 
 ## Step 2: ...
 
+```{r}
 
+fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid + wind_dir + wind_speed + wind_gust + precip + pressure + visib ,  data=data.joined.sample)
+summary(fit)
+
+```
+```{r}
+fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid +  wind_speed + wind_gust + precip + pressure + visib ,  data=data.joined.sample)
+summary(fit)
+```
+
+
+```{r}
+fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid +  wind_speed + wind_gust + precip +  visib ,  data=data.joined.sample)
+summary(fit)
+
+```
+
+```{r}
+
+fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid +  wind_speed + wind_gust + visib ,  data=data.joined.sample)
+summary(fit)
+
+```
+```{r}
+fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid +  wind_speed + wind_gust ,  data=data.joined.sample)
+summary(fit)
+```
 
 # Question:
 
