@@ -31,10 +31,14 @@ Break the process down into steps and create a codeblock for each step.
 ## Step 1: [Step Name] 
 
 ```{r "Step 1: [Step Name]" }
-flights <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv")
-planes <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")
-airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")
-weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv")
+
+
+
+
+flights <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv",  stringsAsFactors = FALSE)
+planes <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv",  stringsAsFactors = FALSE)
+airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv",  stringsAsFactors = FALSE)
+weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv",  stringsAsFactors = FALSE)
 
 
 planes <- setnames(planes, old = c('year'), new = c('manufacture_year'))
@@ -82,38 +86,38 @@ summary(fit)
 
 ```
 
-## Step 2: ...
+
+## Step 2:
+
+Remove Features (Independant Variables) with high p-value
+
+
 
 ```{r}
 
-fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid + wind_dir + wind_speed + wind_gust + precip + pressure + visib ,  data=data.joined.sample)
-summary(fit)
 
-```
-```{r}
-fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid +  wind_speed + wind_gust + precip + pressure + visib ,  data=data.joined.sample)
-summary(fit)
-```
+fit <- lm(dep_delay ~ year + month +day + sched_dep_time + sched_arr_time + carrier + flight + tailnum + origin + dest +  distance + hour + minute + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + dewp + humid + wind_dir + wind_speed + wind_gust + precip + pressure + visib,  data=data.joined.sample)
 
 
-```{r}
-fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid +  wind_speed + wind_gust + precip +  visib ,  data=data.joined.sample)
 summary(fit)
+hist(resid(fit))
+
+
 
 ```
 
-```{r}
 
-fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid +  wind_speed + wind_gust + visib ,  data=data.joined.sample)
-summary(fit)
 
-```
-```{r}
-fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + humid +  wind_speed + wind_gust ,  data=data.joined.sample)
-summary(fit)
-```
+
+
 
 # Question:
+
+
+```{r}
+hist(resid(fit))
+```
+
 
 Is this a good model?  (Write your answer here.)
 
