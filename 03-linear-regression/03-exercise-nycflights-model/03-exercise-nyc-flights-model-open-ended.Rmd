@@ -14,6 +14,15 @@ library("ggplot2")
 library("lubridate")
 library("dplyr")
 library("data.table")
+
+library(readr)
+library(ggplot2)
+library(magrittr)
+library(lubridate)
+library(stringr)
+library(dplyr)
+library(data.table)
+
 ```
 
 # NYCFlights Model
@@ -28,96 +37,150 @@ Break the process down into steps and create a codeblock for each step.
 (You can start with the data that you created last week.)
 
 
-## Step 1: [Step Name] 
+## Step 1: Read the data
 
 ```{r "Step 1: [Step Name]" }
 
 
 
 
-flights <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv",  stringsAsFactors = FALSE)
-planes <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv",  stringsAsFactors = FALSE)
-airports <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv",  stringsAsFactors = FALSE)
-weather <- read.csv("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv",  stringsAsFactors = FALSE)
 
-
-planes <- setnames(planes, old = c('year'), new = c('manufacture_year'))
-
-flights <- flights %>% select(., -time_hour) 
-weather <- weather %>% select(., -time_hour) 
+flightsDT  <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv") 
+planesDT   <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")  %>% setkey(tailnum)
+airportsDT <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")  %>% setkey(faa) 
+weatherDT  <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv") %>%   setkey(origin,year,month,day,hour)
 
 
 
-head(flights)
-form.dep_hour <- round(flights$sched_dep_time /100)
-flights$dep_hour <- form.dep_hour
-
-head(flights)
 ```
+## Step 2: Join the datasets and analyze the structure
 ```{r}
 
 
 
-form.dep_hour <- round(flights$sched_dep_time /100)
-flights$dep_hour <- form.dep_hour
+#data.joined <- flights %>% left_join(planes, by = c('tailnum' = 'tailnum')) %>%  left_join(airports, c("dest"="faa"))  %>% left_join(weather, by = c('year'='year', 'month'='month', 'day'='day', 'dep_hour'='hour', 'origin'='origin')) 
 
-dim (flights)
 
-data.joined <- flights %>% left_join(planes, by = c('tailnum' = 'tailnum')) %>%  left_join(airports, c("dest"="faa"))  %>% left_join(weather, by = c('year'='year', 'month'='month', 'day'='day', 'dep_hour'='hour', 'origin'='origin')) 
+YX <- flightsDT 
+YX %<>% merge( planesDT, all.x = TRUE, by='tailnum', suffixes=c('','.pl') )
+YX %<>% merge( weatherDT, all.x = TRUE, by=c('origin','year','month','day','hour'), suffixes=c('','.we') )
+YX %<>% merge( airportsDT, all.x = TRUE, by.x='origin', by.y='faa', suffixes=c('','.orig') )
+YX %<>% merge( airportsDT, all.x = TRUE, by.x='dest', by.y='faa', suffixes=c('','.dest') )
 
+
+data.joined <- YX
 dim(data.joined)
 
 str(data.joined)
+```
 
-#lapply(data.joined, levels)
+## Step 3: Get sample training data (50% of the entire dataset)
+```{r}
+data.joined.sample <- sample_frac(data.joined, .5)
 
-
-# %>%  left_join(airports, c("origin"="faa")) 
 
 
 ```
 
 
-```{r}
-data.joined.sample <- sample_frac(data.joined, 1)
+## Step 4:
 
-fit <- lm(dep_delay ~ year + month +day + dep_time + sched_dep_time + arr_time + sched_arr_time + arr_delay + carrier + flight + tailnum + origin + dest + air_time + distance + hour + minute + dep_hour + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + dewp + humid + wind_dir + wind_speed + wind_gust + precip + pressure + visib ,  data=data.joined.sample)
-summary(fit)
+Remove entries with NA values for Independant variables that we want to use in the model
+
+
+
+```{r}
+
+dim(data.joined.sample)
+data.joined.sample <- data.joined.sample  %>% 
+  filter(!is.na(dep_delay))   %>% 
+  filter(!is.na(dest))   %>% 
+  filter(!is.na(origin))   %>% 
+  filter(!is.na(year))   %>% 
+  filter(!is.na(month))   %>% 
+  filter(!is.na(day))   %>% 
+  filter(!is.na(hour))   %>% 
+  filter(!is.na(tailnum))   %>% 
+  filter(!is.na(sched_dep_time))   %>% 
+  filter(!is.na(sched_arr_time))   %>% 
+  filter(!is.na(flight))   %>% 
+  filter(!is.na(distance))   %>% 
+  filter(!is.na(year.pl))   %>% 
+  filter(!is.na(minute))   %>% 
+  filter(!is.na(year.pl))   %>% 
+  filter(!is.na(type))   %>% 
+  filter(!is.na(manufacturer))   %>% 
+  filter(!is.na(model))   %>% 
+  filter(!is.na(engines))   %>% 
+  filter(!is.na(seats))   %>% 
+  filter(!is.na(engine))   %>% 
+  filter(!is.na(temp))   %>% 
+  filter(!is.na(dewp))   %>% 
+  filter(!is.na(humid))   %>% 
+  filter(!is.na(wind_dir))   %>% 
+  filter(!is.na(wind_speed))   %>% 
+  filter(!is.na(wind_gust))   %>% 
+  filter(!is.na(precip))   %>% 
+  filter(!is.na(pressure))   %>% 
+  filter(!is.na(visib))   %>% 
+  filter(!is.na(name))   %>% 
+  filter(!is.na(lat))   %>% 
+  filter(!is.na(lon))   %>% 
+  filter(!is.na(tz))   %>%
+  filter(!is.na(name.dest))   %>% 
+  filter(!is.na(lat.dest))   %>% 
+  filter(!is.na(lon.dest))   %>% 
+  filter(!is.na(alt.dest))   %>%
+  filter(!is.na(tz.dest)) 
+
+  
+  
+  
+  
+
+  
+  
+  
+  dim(data.joined.sample)
+
+
+
 
 ```
 
-
-## Step 2:
-
-Remove Features (Independant Variables) with high p-value
-
-
+## Step 5: Create a model with the relevant Features (independant variables). Note: We can not use dep_delay as it will be not available to us in the real world for predicting arrival delays
 
 ```{r}
 
+fit <- lm(arr_delay ~  dest + origin + year + month + day + hour + tailnum + sched_dep_time + sched_arr_time + carrier + flight + distance + year.pl + type + manufacturer + model + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + name + lat + lon + alt + tz + name.dest + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined.sample)
 
-fit <- lm(dep_delay ~ year + month +day + sched_dep_time + sched_arr_time + carrier + flight + tailnum + origin + dest +  distance + hour + minute + manufacture_year + type + manufacturer + model + engines + seats + speed + engine + name + lat + lon + alt + tz + temp + dewp + humid + wind_dir + wind_speed + wind_gust + precip + pressure + visib,  data=data.joined.sample)
+#scatter.smooth(x=data.joined.sample$year, y=data.joined.sample$dep_delay)
+```
 
 
-summary(fit)
+
+
+Step 6: Create a histogram of the Residuals and Summary of the Model. 
+```{r}
 hist(resid(fit))
-
-
-
+summary(fit)
 ```
 
 
+# Question: Is this a good model?  (Write your answer here.)
+This is a not a good model. Based on the extremely low R-squared, we can say that is not a good model.
 
 
 
 
-# Question:
+
+
 
 
 ```{r}
-hist(resid(fit))
+fit <- lm(arr_delay ~  dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type + manufacturer + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + name + lat + lon + alt + tz + name.dest + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined.sample)
+
+
+
 ```
-
-
-Is this a good model?  (Write your answer here.)
 
