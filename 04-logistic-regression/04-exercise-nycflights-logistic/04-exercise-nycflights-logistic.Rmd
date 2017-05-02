@@ -1,13 +1,13 @@
 ---
-title: "NYCFlights: Arrival Delay Logictic Model"
-author: "[Your Name]"
-date: "[Today's Date]"
-output: html_document
+title: 'NYCFlights: Arrival Delay Logictic Model'
+author: "Saqib Ali"
+date: "May 1st, 2017"
+output:
+  html_document: default
+  pdf_document: default
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 
 ## Logsitic and Inverse Logistic Transformation 
@@ -25,7 +25,22 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r "Logistic and Inverse Logistic" }
 
+logistic <- function(x) { 
+  1/(1+exp(-x))
+}
+
+inv_logistic <- function(x) { 
+  -log((1-x)/x)
+}
+
+x <- -10:10
+curve(logistic, -10, 10)
+curve(inv_logistic, 0, 1)
+
+
 ```
+
+
 
 
 # NYCFlights Model
@@ -35,12 +50,174 @@ Using the rectangular data that you created from the earlier assignment and foll
 KNIT YOUR DOCUMENT AS *HTML* AND SUBMIT IT AND THE `Rmd` file to your repository.   
 
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("tidyverse")
+library("ggplot2")
+library("lubridate")
+library("dplyr")
+library("data.table")
+
+library(readr)
+library(ggplot2)
+library(magrittr)
+library(lubridate)
+library(stringr)
+library(dplyr)
+library(caret)
+
+library(data.table)
+
+
+flightsDT  <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv") 
+planesDT   <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")  %>% setkey(tailnum)
+airportsDT <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")  %>% setkey(faa) 
+weatherDT  <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv") %>%   setkey(origin,year,month,day,hour)
+
+
+
+```
+
+
+
+## Step 2: Join the datasets and analyze the structure
+```{r}
+
+
+
+#data.joined <- flights %>% left_join(planes, by = c('tailnum' = 'tailnum')) %>%  left_join(airports, c("dest"="faa"))  %>% left_join(weather, by = c('year'='year', 'month'='month', 'day'='day', 'dep_hour'='hour', 'origin'='origin')) 
+
+
+YX <- flightsDT 
+YX %<>% merge( planesDT, all.x = TRUE, by='tailnum', suffixes=c('','.pl') )
+YX %<>% merge( weatherDT, all.x = TRUE, by=c('origin','year','month','day','hour'), suffixes=c('','.we') )
+YX %<>% merge( airportsDT, all.x = TRUE, by.x='origin', by.y='faa', suffixes=c('','.orig') )
+YX %<>% merge( airportsDT, all.x = TRUE, by.x='dest', by.y='faa', suffixes=c('','.dest') )
+
+
+data.joined <- YX
+
+
+```
+
+
+
+## Step 3: Add a categorical variable for  arr_delay >= 22 minutes. It is called arrival_delayed  
+
+```{r}
+
+#data.joined$arrival_delayed <- as.numeric(data.joined$arr_delay >= 22)
+
+
+data.joined$arrival_delayed <- ifelse(data.joined$arr_delay >= 22, 1,0)
+```
+
+
+## Step 4: Remove entries with NA values for Independant variables that we want to use in the model
+
+```{r}
+
+data.joined <- data.joined  %>% 
+  filter(!is.na(dep_delay))   %>% 
+  filter(!is.na(dest))   %>% 
+  filter(!is.na(origin))   %>% 
+  filter(!is.na(year))   %>% 
+  filter(!is.na(month))   %>% 
+  filter(!is.na(day))   %>% 
+  filter(!is.na(hour))   %>% 
+  filter(!is.na(tailnum))   %>% 
+  filter(!is.na(sched_dep_time))   %>% 
+  filter(!is.na(sched_arr_time))   %>% 
+  filter(!is.na(flight))   %>% 
+  filter(!is.na(distance))   %>% 
+  filter(!is.na(year.pl))   %>% 
+  filter(!is.na(minute))   %>% 
+  filter(!is.na(year.pl))   %>% 
+  filter(!is.na(type))   %>% 
+  filter(!is.na(manufacturer))   %>% 
+  filter(!is.na(model))   %>% 
+  filter(!is.na(engines))   %>% 
+  filter(!is.na(seats))   %>% 
+  filter(!is.na(engine))   %>% 
+  filter(!is.na(temp))   %>% 
+  filter(!is.na(dewp))   %>% 
+  filter(!is.na(humid))   %>% 
+  filter(!is.na(wind_dir))   %>% 
+  filter(!is.na(wind_speed))   %>% 
+  filter(!is.na(wind_gust))   %>% 
+  filter(!is.na(precip))   %>% 
+  filter(!is.na(pressure))   %>% 
+  filter(!is.na(visib))   %>% 
+  filter(!is.na(name))   %>% 
+  filter(!is.na(lat))   %>% 
+  filter(!is.na(lon))   %>% 
+  filter(!is.na(tz))   %>%
+  filter(!is.na(name.dest))   %>% 
+  filter(!is.na(lat.dest))   %>% 
+  filter(!is.na(lon.dest))   %>% 
+  filter(!is.na(alt.dest))   %>%
+  filter(!is.na(tz.dest)) 
+```
+
+## Step 5: Get sample training data (50% of the entire dataset)
+
+
+```{r}
+data.joined.training <- sample_frac(data.joined, .75)
+data.joined.testing <- sample_frac(data.joined, .5)
+```
+
+## Step 6: Generate a Logistic Model
+
+```{r}
+
+logit.fit <- glm(arrival_delayed ~  dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial)
+summary(logit.fit)
+
+```
+
 # Question:
 
 Is this a good model?  (Write your answer here.)
+
+To answer this let's create a Confusion Matrix. Based on the Confusion Matrix results, this is a fairly good model, with high accuracy, sensitivity and specivity.
+
+```{r}
+
+#prob = predict(logit.fit, data.joined.sample, type="response")
+prob = plogis(predict(logit.fit, data.joined.testing))
+prob<-ifelse(prob> 0.5,1,0)
+data.joined.testing$prob = prob
+
+
+confusionMatrix(data.joined.testing$arrival_delayed, prob)
+
+```
+
 
 
 # PART B:
 
 Your model should be good at explaining tardiness. Now, assume that your job is to predict arrival delays a month in advance. You can no longer use all the features in your model. Retrain your model using only features that will be *known* only a month in advance of the departure time.  Show all steps as above.
 
+
+```{r}
+logit.fit <- glm(arrival_delayed ~  dest + origin + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial(link="logit"))
+
+
+```
+
+Let's see how good this model is using a Confusion Matrix. Based on the outcome of the Confusion Matrix, this doesn't look a good Model as the Specificity is very low.
+
+```{r}
+
+#prob = predict(logit.fit, data.joined.sample, type="response")
+prob = plogis(predict(logit.fit, data.joined.testing))
+prob<-ifelse(prob> 0.5,1,0)
+data.joined.testing$prob = prob
+
+
+confusionMatrix(data.joined.testing$arrival_delayed, prob)
+
+```
