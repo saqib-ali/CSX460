@@ -150,29 +150,21 @@ curve(logistic, -10, 10)</code></pre>
 <h1>NYCFlights Model</h1>
 <p>Using the rectangular data that you created from the earlier assignment and following theexample from the text and class, create a model for arr_delay &gt;= 22 minutes. Describe/Explain each of the steps and show all work.</p>
 <p>KNIT YOUR DOCUMENT AS <em>HTML</em> AND SUBMIT IT AND THE <code>Rmd</code> file to your repository.</p>
-<div id="step-2-join-the-datasets-and-analyze-the-structure" class="section level2">
-<h2>Step 2: Join the datasets and analyze the structure</h2>
-<pre class="r"><code>#data.joined &lt;- flights %&gt;% left_join(planes, by = c('tailnum' = 'tailnum')) %&gt;%  left_join(airports, c(&quot;dest&quot;=&quot;faa&quot;))  %&gt;% left_join(weather, by = c('year'='year', 'month'='month', 'day'='day', 'dep_hour'='hour', 'origin'='origin')) 
-
-
-YX &lt;- flightsDT 
+<div id="join-the-datasets-and-analyze-the-structure" class="section level2">
+<h2>Join the datasets and analyze the structure</h2>
+<pre class="r"><code>YX &lt;- flightsDT 
 YX %&lt;&gt;% merge( planesDT, all.x = TRUE, by='tailnum', suffixes=c('','.pl') )
 YX %&lt;&gt;% merge( weatherDT, all.x = TRUE, by=c('origin','year','month','day','hour'), suffixes=c('','.we') )
 YX %&lt;&gt;% merge( airportsDT, all.x = TRUE, by.x='origin', by.y='faa', suffixes=c('','.orig') )
 YX %&lt;&gt;% merge( airportsDT, all.x = TRUE, by.x='dest', by.y='faa', suffixes=c('','.dest') )
-
-
 data.joined &lt;- YX</code></pre>
 </div>
-<div id="step-3-add-a-categorical-variable-for-arr_delay-22-minutes.-it-is-called-arrival_delayed" class="section level2">
-<h2>Step 3: Add a categorical variable for arr_delay &gt;= 22 minutes. It is called arrival_delayed</h2>
-<pre class="r"><code>#data.joined$arrival_delayed &lt;- as.numeric(data.joined$arr_delay &gt;= 22)
-
-
-data.joined$arrival_delayed &lt;- ifelse(data.joined$arr_delay &gt;= 22, 1,0)</code></pre>
+<div id="add-a-categorical-variable-for-arr_delay-22-minutes.-it-is-called-arrival_delayed" class="section level2">
+<h2>Add a categorical variable for arr_delay &gt;= 22 minutes. It is called arrival_delayed</h2>
+<pre class="r"><code>data.joined$arrival_delayed &lt;- ifelse(data.joined$arr_delay &gt;= 22, 1,0)</code></pre>
 </div>
-<div id="step-4-remove-entries-with-na-values-for-independant-variables-that-we-want-to-use-in-the-model" class="section level2">
-<h2>Step 4: Remove entries with NA values for Independant variables that we want to use in the model</h2>
+<div id="remove-entries-with-na-values-for-independant-variables-that-we-want-to-use-in-the-model" class="section level2">
+<h2>Remove entries with NA values for Independant variables that we want to use in the model</h2>
 <pre class="r"><code>data.joined &lt;- data.joined  %&gt;% 
   filter(!is.na(dep_delay))   %&gt;% 
   filter(!is.na(dest))   %&gt;% 
@@ -214,276 +206,114 @@ data.joined$arrival_delayed &lt;- ifelse(data.joined$arr_delay &gt;= 22, 1,0)</c
   filter(!is.na(alt.dest))   %&gt;%
   filter(!is.na(tz.dest)) </code></pre>
 </div>
-<div id="step-5-get-sample-training-data-50-of-the-entire-dataset" class="section level2">
-<h2>Step 5: Get sample training data (50% of the entire dataset)</h2>
+<div id="create-training-and-test-samples" class="section level2">
+<h2>Create Training and Test Samples</h2>
 <pre class="r"><code>data.joined.training &lt;- sample_frac(data.joined, .75)
 data.joined.testing &lt;- sample_frac(data.joined, .5)</code></pre>
 </div>
-<div id="step-6-generate-a-logistic-model" class="section level2">
-<h2>Step 6: Generate a Logistic Model</h2>
+<div id="generate-a-logistic-model" class="section level2">
+<h2>Generate a Logistic Model</h2>
 <pre class="r"><code>logit.fit &lt;- glm(arrival_delayed ~  dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial)</code></pre>
 <pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre class="r"><code>summary(logit.fit)</code></pre>
-<pre><code>## 
-## Call:
-## glm(formula = arrival_delayed ~ dep_delay + dest + origin + year + 
-##     month + day + hour + sched_dep_time + sched_arr_time + carrier + 
-##     distance + year.pl + type + engines + seats + engine + temp + 
-##     dewp + humid + wind_dir + wind_speed + wind_gust + precip + 
-##     pressure + visib + lat + lon + alt + tz + lat.dest + lon.dest + 
-##     alt.dest + tz.dest, family = binomial, data = data.joined.training)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -3.2587  -0.3173  -0.2411  -0.1790   3.7993  
-## 
-## Coefficients: (10 not defined because of singularities)
-##                                Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)                   3.730e+01  7.227e+00   5.162 2.45e-07 ***
-## dep_delay                     1.062e-01  6.389e-04 166.166  &lt; 2e-16 ***
-## destACK                      -6.464e-01  4.304e+00  -0.150 0.880612    
-## destALB                      -7.255e-01  4.414e+00  -0.164 0.869451    
-## destANC                      -8.030e+00  9.758e+01  -0.082 0.934410    
-## destATL                       4.164e-01  2.825e+00   0.147 0.882814    
-## destAUS                       4.323e-01  8.746e-01   0.494 0.621062    
-## destAVL                       7.516e-01  3.263e+00   0.230 0.817795    
-## destBDL                      -1.447e+00  4.488e+00  -0.323 0.747068    
-## destBGR                      -8.356e-01  3.839e+00  -0.218 0.827672    
-## destBHM                      -9.453e-01  2.570e+00  -0.368 0.712950    
-## destBNA                       8.882e-02  2.817e+00   0.032 0.974851    
-## destBOS                      -3.452e-01  4.297e+00  -0.080 0.935965    
-## destBTV                      -5.073e-01  4.105e+00  -0.124 0.901653    
-## destBUF                      -4.420e-01  4.028e+00  -0.110 0.912641    
-## destBUR                       9.302e-01  1.728e+00   0.538 0.590302    
-## destBWI                       6.629e-02  4.338e+00   0.015 0.987809    
-## destBZN                       1.088e+00  8.486e-01   1.282 0.199932    
-## destCAE                       2.008e+00  3.224e+00   0.623 0.533303    
-## destCAK                       3.224e-02  3.785e+00   0.009 0.993205    
-## destCHO                      -1.344e+00  4.128e+00  -0.326 0.744801    
-## destCHS                      -8.128e-03  3.138e+00  -0.003 0.997933    
-## destCLE                      -9.219e-02  3.721e+00  -0.025 0.980232    
-## destCLT                       1.295e-01  3.388e+00   0.038 0.969509    
-## destCMH                      -8.708e-02  3.569e+00  -0.024 0.980532    
-## destCRW                      -8.833e-01  3.870e+00  -0.228 0.819452    
-## destCVG                       1.618e-01  3.287e+00   0.049 0.960730    
-## destDAY                      -1.601e-01  3.385e+00  -0.047 0.962280    
-## destDCA                       8.861e-02  4.251e+00   0.021 0.983370    
-## destDEN                       7.539e-01  6.335e-01   1.190 0.234025    
-## destDFW                       5.664e-01  1.207e+00   0.469 0.638804    
-## destDSM                       1.497e-02  2.129e+00   0.007 0.994392    
-## destDTW                      -1.862e-01  3.499e+00  -0.053 0.957572    
-## destEGE                      -5.181e-01  6.524e-01  -0.794 0.427145    
-## destEYW                       2.337e+00  1.853e+00   1.261 0.207201    
-## destFLL                       4.801e-01  2.007e+00   0.239 0.810972    
-## destGRR                       4.793e-01  3.198e+00   0.150 0.880866    
-## destGSO                       1.623e-02  3.614e+00   0.004 0.996416    
-## destGSP                       3.214e-01  3.227e+00   0.100 0.920669    
-## destHDN                       1.723e-01  1.182e+00   0.146 0.884105    
-## destHNL                       1.488e+00  8.300e+00   0.179 0.857745    
-## destHOU                       7.128e-01  1.101e+00   0.647 0.517528    
-## destIAD                      -1.381e-01  4.218e+00  -0.033 0.973885    
-## destIAH                       6.706e-01  1.134e+00   0.592 0.554140    
-## destILM                      -1.797e+00  3.583e+00  -0.502 0.615988    
-## destIND                       1.086e-01  3.089e+00   0.035 0.971966    
-## destJAC                       9.660e-01  8.158e-01   1.184 0.236377    
-## destJAX                       1.686e-01  2.638e+00   0.064 0.949030    
-## destLAS                       5.984e-01  1.152e+00   0.520 0.603291    
-## destLAX                       9.904e-01  1.732e+00   0.572 0.567379    
-## destLEX                      -7.317e+00  1.970e+02  -0.037 0.970373    
-## destLGB                       1.261e-01  1.725e+00   0.073 0.941697    
-## destMCI                       4.593e-01  1.923e+00   0.239 0.811247    
-## destMCO                       9.853e-02  2.336e+00   0.042 0.966362    
-## destMDW                       2.911e-01  2.916e+00   0.100 0.920480    
-## destMEM                       8.504e-02  2.302e+00   0.037 0.970532    
-## destMHT                      -5.674e-01  4.245e+00  -0.134 0.893656    
-## destMIA                       3.311e-01  1.955e+00   0.169 0.865517    
-## destMKE                       3.746e-01  2.881e+00   0.130 0.896542    
-## destMSN                       1.288e-01  2.695e+00   0.048 0.961896    
-## destMSP                       1.565e-01  2.142e+00   0.073 0.941769    
-## destMSY                       2.908e-01  1.727e+00   0.168 0.866289    
-## destMTJ                      -8.436e-01  1.672e+00  -0.504 0.613917    
-## destMVY                      -1.886e-01  4.374e+00  -0.043 0.965608    
-## destMYR                      -4.282e-01  3.426e+00  -0.125 0.900560    
-## destOAK                       5.770e-01  2.019e+00   0.286 0.775057    
-## destOKC                       1.147e+00  1.342e+00   0.855 0.392626    
-## destOMA                       5.840e-01  1.821e+00   0.321 0.748372    
-## destORD                       2.504e-01  2.894e+00   0.087 0.931042    
-## destORF                      -3.112e-01  4.045e+00  -0.077 0.938664    
-## destPBI                       4.110e-01  2.114e+00   0.194 0.845836    
-## destPDX                       7.818e-01  1.681e+00   0.465 0.641921    
-## destPHL                       3.847e-01  4.565e+00   0.084 0.932837    
-## destPHX                       5.464e-01  9.169e-01   0.596 0.551228    
-## destPIT                      -1.883e-02  3.936e+00  -0.005 0.996184    
-## destPSP                      -6.620e+00  5.610e+01  -0.118 0.906059    
-## destPVD                      -5.275e-01  4.369e+00  -0.121 0.903890    
-## destPWM                      -4.728e-01  4.079e+00  -0.116 0.907727    
-## destRDU                      -1.347e-01  3.692e+00  -0.036 0.970889    
-## destRIC                       1.072e-01  4.055e+00   0.026 0.978902    
-## destROC                      -2.084e-01  4.128e+00  -0.050 0.959727    
-## destRSW                       1.849e-01  1.998e+00   0.093 0.926256    
-## destSAN                       9.206e-01  1.657e+00   0.556 0.578437    
-## destSAT                       2.944e-01  7.402e-01   0.398 0.690890    
-## destSAV                      -1.032e-02  2.930e+00  -0.004 0.997189    
-## destSBN                      -2.429e+00  3.495e+00  -0.695 0.487085    
-## destSDF                       4.262e-02  3.100e+00   0.014 0.989030    
-## destSEA                       8.073e-01  1.597e+00   0.506 0.613207    
-## destSFO                       1.025e+00  2.018e+00   0.508 0.611600    
-## destSJC                       3.722e-01  2.004e+00   0.186 0.852705    
-## destSLC                       3.671e-01  5.471e-01   0.671 0.502225    
-## destSMF                       1.132e+00  1.873e+00   0.605 0.545477    
-## destSNA                       6.356e-01  1.679e+00   0.379 0.704960    
-## destSRQ                       2.880e-01  2.088e+00   0.138 0.890317    
-## destSTL                       3.359e-01  2.494e+00   0.135 0.892883    
-## destSYR                      -7.364e-01  4.270e+00  -0.172 0.863094    
-## destTPA                       4.114e-01  2.179e+00   0.189 0.850217    
-## destTUL                       7.786e-01  1.627e+00   0.478 0.632335    
-## destTVC                      -1.319e-01  3.180e+00  -0.041 0.966918    
-## destTYS                      -7.073e-02  3.133e+00  -0.023 0.981991    
-## destXNA                       8.837e-01  1.836e+00   0.481 0.630250    
-## originJFK                    -8.600e-02  5.064e-02  -1.698 0.089471 .  
-## originLGA                     7.110e-02  4.928e-02   1.443 0.149072    
-## year                                 NA         NA      NA       NA    
-## month                         4.568e-04  3.061e-03   0.149 0.881393    
-## day                           3.532e-04  1.161e-03   0.304 0.760995    
-## hour                         -6.260e-02  5.432e-02  -1.152 0.249181    
-## sched_dep_time                8.322e-04  5.430e-04   1.533 0.125350    
-## sched_arr_time                9.143e-05  3.318e-05   2.756 0.005854 ** 
-## carrierAA                    -6.628e-02  9.896e-02  -0.670 0.503004    
-## carrierAS                    -1.407e-01  2.839e-01  -0.495 0.620283    
-## carrierB6                     5.489e-01  5.860e-02   9.367  &lt; 2e-16 ***
-## carrierDL                    -6.706e-02  6.701e-02  -1.001 0.316984    
-## carrierEV                     3.179e-01  6.246e-02   5.090 3.58e-07 ***
-## carrierF9                     8.168e-01  1.842e-01   4.435 9.19e-06 ***
-## carrierFL                     5.212e-01  1.204e-01   4.329 1.49e-05 ***
-## carrierHA                     3.139e-01  5.046e-01   0.622 0.533854    
-## carrierMQ                     1.363e-01  2.113e-01   0.645 0.518805    
-## carrierOO                     1.281e+00  8.816e-01   1.453 0.146264    
-## carrierUA                    -1.271e-01  7.362e-02  -1.726 0.084288 .  
-## carrierUS                     6.038e-01  8.174e-02   7.387 1.50e-13 ***
-## carrierVX                    -2.421e-01  1.065e-01  -2.273 0.023022 *  
-## carrierWN                    -3.412e-01  9.104e-02  -3.748 0.000178 ***
-## carrierYV                     2.735e-01  2.477e-01   1.104 0.269416    
-## distance                     -3.688e-04  2.633e-03  -0.140 0.888615    
-## year.pl                      -1.211e-02  2.486e-03  -4.871 1.11e-06 ***
-## typeFixed wing single engine  5.657e-01  6.107e-01   0.926 0.354297    
-## typeRotorcraft                6.846e-03  9.966e-01   0.007 0.994519    
-## engines                       2.482e-01  2.189e-01   1.134 0.256715    
-## seats                        -3.604e-04  2.423e-04  -1.488 0.136844    
-## engineReciprocating          -1.033e-01  7.768e-01  -0.133 0.894193    
-## engineTurbo-fan               2.008e-01  9.240e-01   0.217 0.827977    
-## engineTurbo-jet               3.268e-01  9.243e-01   0.354 0.723682    
-## engineTurbo-prop             -3.710e-01  1.354e+00  -0.274 0.784058    
-## engineTurbo-shaft                    NA         NA      NA       NA    
-## temp                         -1.016e-02  6.328e-03  -1.605 0.108531    
-## dewp                          6.359e-03  6.795e-03   0.936 0.349354    
-## humid                         1.456e-03  3.368e-03   0.432 0.665498    
-## wind_dir                     -8.974e-04  1.040e-04  -8.630  &lt; 2e-16 ***
-## wind_speed                    6.963e+02  2.925e+02   2.381 0.017283 *  
-## wind_gust                    -6.050e+02  2.541e+02  -2.381 0.017283 *  
-## precip                        2.605e+00  5.826e-01   4.472 7.75e-06 ***
-## pressure                     -1.597e-02  1.514e-03 -10.546  &lt; 2e-16 ***
-## visib                        -6.411e-02  7.540e-03  -8.503  &lt; 2e-16 ***
-## lat                                  NA         NA      NA       NA    
-## lon                                  NA         NA      NA       NA    
-## alt                                  NA         NA      NA       NA    
-## tz                                   NA         NA      NA       NA    
-## lat.dest                             NA         NA      NA       NA    
-## lon.dest                             NA         NA      NA       NA    
-## alt.dest                             NA         NA      NA       NA    
-## tz.dest                              NA         NA      NA       NA    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## (Dispersion parameter for binomial family taken to be 1)
-## 
-##     Null deviance: 166497  on 175229  degrees of freedom
-## Residual deviance:  72992  on 175088  degrees of freedom
-##   (579 observations deleted due to missingness)
-## AIC: 73276
-## 
-## Number of Fisher Scoring iterations: 10</code></pre>
+<pre class="r"><code>#summary(logit.fit)</code></pre>
+</div>
+<div id="predict" class="section level2">
+<h2>Predict</h2>
+<pre class="r"><code>prob = plogis(predict(logit.fit, data.joined.testing))</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
+## ifelse(type == : prediction from a rank-deficient fit may be misleading</code></pre>
 </div>
 </div>
 <div id="question" class="section level1">
 <h1>Question:</h1>
 <p>Is this a good model? (Write your answer here.)</p>
-<p>To answer this let’s create a Confusion Matrix. Based on the Confusion Matrix results, this is a fairly good model, with high accuracy, sensitivity and specivity.</p>
-<pre class="r"><code>#prob = predict(logit.fit, data.joined.sample, type=&quot;response&quot;)
-prob = plogis(predict(logit.fit, data.joined.testing))</code></pre>
-<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
-## ifelse(type == : prediction from a rank-deficient fit may be misleading</code></pre>
-<pre class="r"><code>prob&lt;-ifelse(prob&gt; 0.5,1,0)
-data.joined.testing$prob = prob
-
-
-confusionMatrix(data.joined.testing$arrival_delayed, prob)</code></pre>
-<pre><code>## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction     0     1
-##          0 93513  1933
-##          1  6542 14837
-##                                          
-##                Accuracy : 0.9275         
-##                  95% CI : (0.926, 0.9289)
-##     No Information Rate : 0.8565         
-##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16      
-##                                          
-##                   Kappa : 0.7352         
-##  Mcnemar's Test P-Value : &lt; 2.2e-16      
-##                                          
-##             Sensitivity : 0.9346         
-##             Specificity : 0.8847         
-##          Pos Pred Value : 0.9797         
-##          Neg Pred Value : 0.6940         
-##              Prevalence : 0.8565         
-##          Detection Rate : 0.8005         
-##    Detection Prevalence : 0.8170         
-##       Balanced Accuracy : 0.9097         
-##                                          
-##        'Positive' Class : 0              
-## </code></pre>
+<p>To answer this let’s first calculate the misclassifications, Specificity and Sensitivity of the model.</p>
+<div id="model-evaluation" class="section level2">
+<h2>Model Evaluation</h2>
+<div id="decide-on-optimal-prediction-probability-cutoff-for-the-model" class="section level3">
+<h3>Decide on optimal prediction probability cutoff for the model</h3>
+<p>Using the InformationValue::optimalCutoff we determine the optimal cut-off</p>
+<pre class="r"><code>optimalCutoff(data.joined.testing$arrival_delayed, prob)[1] </code></pre>
+<pre><code>## [1] 0.5</code></pre>
+<pre class="r"><code>optCutOff &lt;- optimalCutoff(data.joined.testing$arrival_delayed, prob)[1] </code></pre>
+</div>
+<div id="mis-classification-rate" class="section level3">
+<h3>Mis-classification rate</h3>
+<pre class="r"><code>misClassError(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)</code></pre>
+<pre><code>## [1] 0.0726</code></pre>
+</div>
+<div id="sensitivity" class="section level3">
+<h3>Sensitivity</h3>
+<pre class="r"><code>sensitivity(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)</code></pre>
+<pre><code>## [1] 0.695771</code></pre>
+</div>
+<div id="specificity" class="section level3">
+<h3>Specificity</h3>
+<pre class="r"><code>specificity(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)</code></pre>
+<pre><code>## [1] 0.9795539</code></pre>
+</div>
+<div id="confusion-matrix" class="section level3">
+<h3>Confusion Matrix</h3>
+<pre class="r"><code>confusionMatrix(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)</code></pre>
+<pre><code>##       0     1
+## 0 93279  6568
+## 1  1947 15021</code></pre>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>Based on the Confusion Matrix results, high Specificity and high Sensitivity and very low mis-classification errors this is a fairly good model, with high accuracy, sensitivity and specivity.</p>
+</div>
 </div>
 <div id="part-b" class="section level1">
 <h1>PART B:</h1>
 <p>Your model should be good at explaining tardiness. Now, assume that your job is to predict arrival delays a month in advance. You can no longer use all the features in your model. Retrain your model using only features that will be <em>known</em> only a month in advance of the departure time. Show all steps as above.</p>
-<pre class="r"><code>logit.fit &lt;- glm(arrival_delayed ~  dest + origin + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial(link=&quot;logit&quot;))</code></pre>
-<p>Let’s see how good this model is using a Confusion Matrix. Based on the outcome of the Confusion Matrix, this doesn’t look a good Model as the Specificity is very low.</p>
-<pre class="r"><code>#prob = predict(logit.fit, data.joined.sample, type=&quot;response&quot;)
-prob = plogis(predict(logit.fit, data.joined.testing))</code></pre>
+<pre class="r"><code>logit.fit &lt;- glm(arrival_delayed ~  dest + origin + sched_dep_time + sched_arr_time + carrier + distance + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial(link=&quot;logit&quot;))</code></pre>
+<div id="model-evaluation-1" class="section level2">
+<h2>Model Evaluation</h2>
+<p>Let’s see how good this model is using a Confusion Matrix.</p>
+<div id="decide-on-optimal-prediction-probability-cutoff-for-the-model-1" class="section level3">
+<h3>Decide on optimal prediction probability cutoff for the model</h3>
+<p>Using the InformationValue::optimalCutoff we determine the optimal cut-off</p>
+<pre class="r"><code>prob = plogis(predict(logit.fit, data.joined.testing))</code></pre>
 <pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
 ## ifelse(type == : prediction from a rank-deficient fit may be misleading</code></pre>
-<pre class="r"><code>prob&lt;-ifelse(prob&gt; 0.5,1,0)
-data.joined.testing$prob = prob
-
-
-confusionMatrix(data.joined.testing$arrival_delayed, prob)</code></pre>
-<pre><code>## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction     0     1
-##          0 95418    28
-##          1 21342    37
-##                                           
-##                Accuracy : 0.8171          
-##                  95% CI : (0.8148, 0.8193)
-##     No Information Rate : 0.9994          
-##     P-Value [Acc &gt; NIR] : 1               
-##                                           
-##                   Kappa : 0.0023          
-##  Mcnemar's Test P-Value : &lt;2e-16          
-##                                           
-##             Sensitivity : 0.817215        
-##             Specificity : 0.569231        
-##          Pos Pred Value : 0.999707        
-##          Neg Pred Value : 0.001731        
-##              Prevalence : 0.999444        
-##          Detection Rate : 0.816760        
-##    Detection Prevalence : 0.817000        
-##       Balanced Accuracy : 0.693223        
-##                                           
-##        'Positive' Class : 0               
-## </code></pre>
+<pre class="r"><code>optimalCutoff(data.joined.testing$arrival_delayed, prob)[1] </code></pre>
+<pre><code>## [1] 0.4900354</code></pre>
+<pre class="r"><code>optCutOff &lt;- optimalCutoff(data.joined.testing$arrival_delayed, prob)[1] </code></pre>
+</div>
+<div id="mis-classification-rate-1" class="section level3">
+<h3>Mis-classification rate</h3>
+<pre class="r"><code>misClassError(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)</code></pre>
+<pre><code>## [1] 0.184</code></pre>
+</div>
+<div id="sensitivity-1" class="section level3">
+<h3>Sensitivity</h3>
+<p>Note that the <strong>Sensitivity</strong> is very low</p>
+<pre class="r"><code>sensitivity(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)</code></pre>
+<pre><code>## [1] 0.001713836</code></pre>
+</div>
+<div id="specificity-1" class="section level3">
+<h3>Specificity</h3>
+<pre class="r"><code>specificity(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)</code></pre>
+<pre><code>## [1] 0.999811</code></pre>
+</div>
+<div id="confusion-matrix-1" class="section level3">
+<h3>Confusion Matrix</h3>
+<pre class="r"><code>confusionMatrix(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)</code></pre>
+<pre><code>##       0     1
+## 0 95208 21552
+## 1    18    37</code></pre>
+</div>
+</div>
+<div id="conclusion-1" class="section level2">
+<h2>Conclusion</h2>
+<p>Based on the Confusion Matrix results, and a very low Sensitivity, we can conclude that this is <strong>NOT</strong> a Model Fit.</p>
+<pre class="r"><code>#prob = predict(logit.fit, data.joined.sample, type=&quot;response&quot;)
+#prob = plogis(predict(logit.fit, data.joined.testing))
+#prob&lt;-ifelse(prob&gt; 0.5,1,0)
+#data.joined.testing$prob = prob</code></pre>
+</div>
 </div>
 
 

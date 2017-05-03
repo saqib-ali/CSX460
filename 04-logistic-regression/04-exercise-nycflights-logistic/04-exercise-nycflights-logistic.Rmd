@@ -65,7 +65,9 @@ library(magrittr)
 library(lubridate)
 library(stringr)
 library(dplyr)
-library(caret)
+#library(caret)
+library(InformationValue)
+
 
 library(data.table)
 
@@ -81,40 +83,26 @@ weatherDT  <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycf
 
 
 
-## Step 2: Join the datasets and analyze the structure
+## Join the datasets and analyze the structure
 ```{r}
-
-
-
-#data.joined <- flights %>% left_join(planes, by = c('tailnum' = 'tailnum')) %>%  left_join(airports, c("dest"="faa"))  %>% left_join(weather, by = c('year'='year', 'month'='month', 'day'='day', 'dep_hour'='hour', 'origin'='origin')) 
-
-
 YX <- flightsDT 
 YX %<>% merge( planesDT, all.x = TRUE, by='tailnum', suffixes=c('','.pl') )
 YX %<>% merge( weatherDT, all.x = TRUE, by=c('origin','year','month','day','hour'), suffixes=c('','.we') )
 YX %<>% merge( airportsDT, all.x = TRUE, by.x='origin', by.y='faa', suffixes=c('','.orig') )
 YX %<>% merge( airportsDT, all.x = TRUE, by.x='dest', by.y='faa', suffixes=c('','.dest') )
-
-
 data.joined <- YX
-
-
 ```
 
 
 
-## Step 3: Add a categorical variable for  arr_delay >= 22 minutes. It is called arrival_delayed  
+## Add a categorical variable for  arr_delay >= 22 minutes. It is called arrival_delayed  
 
 ```{r}
-
-#data.joined$arrival_delayed <- as.numeric(data.joined$arr_delay >= 22)
-
-
 data.joined$arrival_delayed <- ifelse(data.joined$arr_delay >= 22, 1,0)
 ```
 
 
-## Step 4: Remove entries with NA values for Independant variables that we want to use in the model
+## Remove entries with NA values for Independant variables that we want to use in the model
 
 ```{r}
 
@@ -160,7 +148,7 @@ data.joined <- data.joined  %>%
   filter(!is.na(tz.dest)) 
 ```
 
-## Step 5: Get sample training data (50% of the entire dataset)
+## Create Training and Test Samples
 
 
 ```{r}
@@ -168,33 +156,62 @@ data.joined.training <- sample_frac(data.joined, .75)
 data.joined.testing <- sample_frac(data.joined, .5)
 ```
 
-## Step 6: Generate a Logistic Model
+## Generate a Logistic Model
 
 ```{r}
 
 logit.fit <- glm(arrival_delayed ~  dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial)
-summary(logit.fit)
+#summary(logit.fit)
 
 ```
+
+## Predict
+
+```{r}
+prob = plogis(predict(logit.fit, data.joined.testing))
+```
+
 
 # Question:
 
 Is this a good model?  (Write your answer here.)
 
-To answer this let's create a Confusion Matrix. Based on the Confusion Matrix results, this is a fairly good model, with high accuracy, sensitivity and specivity.
+To answer this let's first calculate the misclassifications, Specificity and Sensitivity of the model. 
 
+## Model Evaluation 
+
+### Decide on optimal prediction probability cutoff for the model
+
+Using the InformationValue::optimalCutoff  we determine the optimal cut-off
 ```{r}
-
-#prob = predict(logit.fit, data.joined.sample, type="response")
-prob = plogis(predict(logit.fit, data.joined.testing))
-prob<-ifelse(prob> 0.5,1,0)
-data.joined.testing$prob = prob
-
-
-confusionMatrix(data.joined.testing$arrival_delayed, prob)
-
+optimalCutoff(data.joined.testing$arrival_delayed, prob)[1] 
+optCutOff <- optimalCutoff(data.joined.testing$arrival_delayed, prob)[1] 
 ```
 
+### Mis-classification rate
+
+```{r}
+misClassError(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)
+```
+
+### Sensitivity
+
+```{r}
+sensitivity(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)
+```
+
+### Specificity
+```{r}
+specificity(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)
+```
+
+### Confusion Matrix
+```{r}
+confusionMatrix(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)
+```
+
+## Conclusion
+Based on the Confusion Matrix results, high Specificity and high Sensitivity and very low mis-classification errors this is a fairly good model, with high accuracy, sensitivity and specivity.
 
 
 # PART B:
@@ -203,21 +220,54 @@ Your model should be good at explaining tardiness. Now, assume that your job is 
 
 
 ```{r}
-logit.fit <- glm(arrival_delayed ~  dest + origin + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial(link="logit"))
-
-
+logit.fit <- glm(arrival_delayed ~  dest + origin + sched_dep_time + sched_arr_time + carrier + distance + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial(link="logit"))
 ```
 
-Let's see how good this model is using a Confusion Matrix. Based on the outcome of the Confusion Matrix, this doesn't look a good Model as the Specificity is very low.
+
+## Model Evaluation 
+Let's see how good this model is using a Confusion Matrix.
+
+
+### Decide on optimal prediction probability cutoff for the model
+
+Using the InformationValue::optimalCutoff  we determine the optimal cut-off
+```{r}
+prob = plogis(predict(logit.fit, data.joined.testing))
+optimalCutoff(data.joined.testing$arrival_delayed, prob)[1] 
+optCutOff <- optimalCutoff(data.joined.testing$arrival_delayed, prob)[1] 
+```
+
+### Mis-classification rate
 
 ```{r}
+misClassError(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)
+```
 
+### Sensitivity
+Note that the **Sensitivity** is very low
+```{r}
+sensitivity(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)
+```
+
+### Specificity
+```{r}
+specificity(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)
+```
+
+### Confusion Matrix
+```{r}
+confusionMatrix(data.joined.testing$arrival_delayed, prob, threshold = optCutOff)
+```
+
+## Conclusion
+Based on the Confusion Matrix results, and a very low Sensitivity, we can conclude that this is **NOT** a Model Fit.
+
+
+```{r}
 #prob = predict(logit.fit, data.joined.sample, type="response")
-prob = plogis(predict(logit.fit, data.joined.testing))
-prob<-ifelse(prob> 0.5,1,0)
-data.joined.testing$prob = prob
-
-
-confusionMatrix(data.joined.testing$arrival_delayed, prob)
+#prob = plogis(predict(logit.fit, data.joined.testing))
+#prob<-ifelse(prob> 0.5,1,0)
+#data.joined.testing$prob = prob
 
 ```
+
