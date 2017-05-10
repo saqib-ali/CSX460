@@ -1,8 +1,10 @@
 ---
-title: "Classification Mettrics"
-author: "Christopher Brown"
-date: "October 5, 2015"
-output: html_document
+title: "Classification Metrics"
+author: "Saqib Ali"
+date: "May 09, 2017"
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 
@@ -26,9 +28,127 @@ Write functions of `y` and `y_hat` to calculate the following classification met
 * Kappa
 
 ```{r "definitions", echo=FALSE}
+library(magrittr)
+library("tidyverse")
+library("ggplot2")
+library("lubridate")
+library("dplyr")
+library("data.table")
+
+library(readr)
+library(ggplot2)
+library(magrittr)
+library(lubridate)
+library(stringr)
+library(dplyr)
+#library(caret)
+library(InformationValue)
+
+
+library(data.table)
+
+data.joined <- readRDS(file="/home/saqib/ml_at_berkeley/CSX460/04-logistic-regression/04-exercise-nycflights-logistic/flightdata.Rda")
+data.joined$arrival_delayed <- ifelse(data.joined$arr_delay >= 22, 1,0)
+
+data.joined <- data.joined  %>% filter(!is.na(arrival_delayed))   
+
+data.joined.training <- sample_frac(data.joined, .75)
+data.joined.testing <- sample_frac(data.joined, .5)
+logit.fit <- glm(arrival_delayed ~  dest + origin + sched_dep_time + sched_arr_time + carrier + distance + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial(link="logit"))
+logit.fit <- glm(arrival_delayed ~  dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data = data.joined.training, family = binomial)
+
 
 
 ```
+
+```{r}
+prob = plogis(predict(logit.fit, data.joined.testing))
+prob<-ifelse(prob> 0.5,1,0)
+data.joined.testing$prob = prob
+
+
+confusionMatrix(data.joined.testing$arrival_delayed, prob)
+y = data.joined.testing$arrival_delayed
+y_hat = data.joined.testing$prob
+```
+```{r}
+
+
+
+#TP <- sum((y==0)&(y==y_hat))
+#TN <- sum((y==1)&(y==y_hat))
+#FP <- sum((y_hat==0)&(y==1))
+#FN <- sum((y_hat==1)&(y==0))
+
+Accuracy <- function(y, y_hat){
+  (sum((y==0)&(y==y_hat)) + sum((y==1)&(y==y_hat))) / (sum((y==0)&(y==y_hat)) + sum((y==1)&(y==y_hat)) + sum((y_hat==0)&(y==1)) + sum((y_hat==1)&(y==0)))
+}
+
+TruePositiveRate <- function(y, yhat){
+ sum((y==0)&(y==y_hat))/(sum((y==0)&(y==y_hat)) + sum((y_hat==1)&(y==0)))
+  
+}  
+
+
+FalsePositiveRate <- function(y, y_hat){
+  sum((y_hat==0)&(y==1))/(sum((y_hat==0)&(y==1)) + sum((y==1)&(y==y_hat)))
+}
+
+
+TrueNegativeRate  <- function(y, y_hat){
+  sum((y==1)&(y==y_hat))/(sum((y==1)&(y==y_hat)) + sum((y_hat==0)&(y==1)))
+
+}
+
+
+FalseNegativeRate  <- function(y, y_hat){
+ sum((y_hat==1)&(y==0))/(sum((y_hat==1)&(y==0)) + sum((y==0)&(y==y_hat)))
+}
+
+Sensitivity <- TruePositiveRate
+Specificity <- TrueNegativeRate
+
+Recall <- TruePositiveRate
+
+
+Precision <- function(y, y_hat){
+  sum((y==0)&(y==y_hat)) / (sum((y==0)&(y==y_hat))+sum((y_hat==0)&(y==1)))
+}
+
+Prevalence <- function(y, y_hat){
+  sum(y==1)/length(y)
+  
+}
+
+# Kappa
+
+
+```
+
+
+```{r}
+
+Accuracy(y,y_hat)
+1-misClassError(data.joined.testing$arrival_delayed, prob)
+
+TrueNegativeRate(y,y_hat)
+sensitivity(data.joined.testing$arrival_delayed, prob)
+
+TruePositiveRate(y,y_hat)
+FalsePositiveRate(y,y_hat)
+FalseNegativeRate(y,y_hat)
+Sensitivity(y,y_hat)
+Specificity(y,y_hat)
+specificity(data.joined.testing$arrival_delayed, prob)
+
+Recall(y,y_hat)
+
+Precision(y,y_hat)
+
+Prevalence(y,y_hat)
+
+```
+
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
