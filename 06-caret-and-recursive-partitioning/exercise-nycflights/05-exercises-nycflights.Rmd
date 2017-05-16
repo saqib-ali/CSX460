@@ -91,28 +91,11 @@ str(flightsDT)
 
 (l <- sapply(flightsDT, function(x) is.factor(x)))
 
-fitControl <- trainControl(method = "repeatedcv",
-                           number = 2,
-                           repeats = 2
-                           ## Estimate class probabilities
-                      #     classProbs = TRUE,
-                           ## Evaluate performance using 
-                           ## the following function
-                      #     summaryFunction = twoClassSummary
-                      )
+fitControl <- trainControl(method = "cv", number = 10)
 
 
 
-glmBoostModel <- train(arrival_delayed ~ ., 
-                       data=flightsDT, 
-                       method = "glm", 
-                   #    metric="ROC", 
-                       trControl = fitControl, 
-                       tuneLength=5,
-                       na.action = na.omit,
-                       center=TRUE, 
-                       family=binomial()
-               )
+glmBoostModel <- train(arrival_delayed ~ ., data=flightsDT, method = "glm", trControl = fitControl, na.action = na.omit)
 
 
 ```
