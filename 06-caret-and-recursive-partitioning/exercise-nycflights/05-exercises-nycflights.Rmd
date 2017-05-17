@@ -1,10 +1,10 @@
 ---
 title: "Caret / Recursive Partitioning"
-author: "Your Name Here"
-date: "Today's Date"
+author: 'Saqib Ali  '
+date: "May 16th, 2017"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r init, warning=FALSE, echo=FALSE, message=FALSE}
@@ -22,18 +22,7 @@ library(dplyr)
 Load the data
 
 ```{r}
-flightsDT  <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv") 
-
-
-
-
-
-```
-
-
-Merge data
-
-```{r}
+data.joined <- readRDS(file="/home/saqib/ml_at_berkeley/CSX460/04-logistic-regression/04-exercise-nycflights-logistic/flightdata.Rda")
 
 
 ```
@@ -42,6 +31,9 @@ Merge data
 ## Add a categorical variable for  arr_delay >= 22 minutes. It is called arrival_delayed  
 
 ```{r}
+data.joined$arrival_delayed <- factor(ifelse(data.joined$arr_delay >= 22, 1,0))
+
+
 
 ```
 
@@ -51,7 +43,12 @@ Filter out rows with NAs
 
 ```{r}
 
+data.joined <- data.joined  %>% filter(!is.na(arrival_delayed))   
 
+#data.joined <- data.joined[, speed:=NULL]
+
+data.joined.training <- sample_frac(data.joined, .75)
+data.joined.testing <- sample_frac(data.joined, .5)
 ```
 
 
@@ -68,38 +65,41 @@ Show all work.
 ```{r logistic model}
 # Your Work Here
 
-
-#data.joined <- readRDS(file="/home/saqib/ml_at_berkeley/CSX460/04-logistic-regression/04-exercise-nycflights-logistic/flightdata.Rda")
-flightsDT$arrival_delayed <- factor(ifelse(flightsDT$arr_delay >= 22, 1,0))
-#flightsDT <- sample_frac(flightsDT, .1)
-flightsDT <- flightsDT[, speed:=NULL]
-
-
-#data.joined <- sample_frac(data.joined, .1)
-#data.joined <-as.data.table(data.joined)
-
 #data.joined <- data.joined[, speed:=NULL]
 
-#data.joined <- na.omit(data.joined)
 
-
-str(flightsDT)
-
-#str(data.joined)
 #lapply(data.joined, levels)
+#(l <- sapply(data.joined, function(x) is.factor(x)))
+
+fitControl <- trainControl(method = "cv", number = 2)
+
+glmFit <- train(arrival_delayed ~ dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined, method = "glm", trControl = fitControl)
 
 
-(l <- sapply(flightsDT, function(x) is.factor(x)))
-
-fitControl <- trainControl(method = "cv", number = 10)
-
-
-
-glmBoostModel <- train(arrival_delayed ~ ., data=flightsDT, method = "glm", trControl = fitControl, na.action = na.omit)
 
 
 ```
 
+
+```{r}
+
+pred <- as.vector(ifelse(predict(glmFit, newdata=data.joined, type="prob")[,"1"]<.5, 0, 1))
+probsTest <- predict(glmFit, data.joined.testing, type = "prob")
+pred      <- factor( ifelse(probsTest[, "1"] > 0.5, "1", "0") )
+confusionMatrix(pred, data.joined.testing$arrival_delayed)
+
+
+```
+
+```{r}
+library(pROC)
+probsTrain <- predict(glmFit, data.joined.training, type = "prob")
+rocCurve   <- roc(response = data.joined.training$arrival_delayed,
+                      predictor = probsTrain[, "1"],
+                      levels = rev(levels(data.joined.training$arrival_delayed)))
+plot(rocCurve, print.thres = "best")
+
+```
 
 ## Exercise 2: caret/rpart (5 points)
 
