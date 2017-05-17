@@ -19,7 +19,7 @@ library(dplyr)
 ```
 
 
-Load the data
+## Load the data
 
 ```{r}
 data.joined <- readRDS(file="/home/saqib/ml_at_berkeley/CSX460/04-logistic-regression/04-exercise-nycflights-logistic/flightdata.Rda")
@@ -39,16 +39,22 @@ data.joined$arrival_delayed <- factor(ifelse(data.joined$arr_delay >= 22, 1,0))
 
 
 
-Filter out rows with NAs
+## Filter out rows with NAs for arrival_delayed
 
 ```{r}
 
 data.joined <- data.joined  %>% filter(!is.na(arrival_delayed))   
 
 #data.joined <- data.joined[, speed:=NULL]
+```
+
+
+## Split the Dataset in Training and Test datasets
+```{r}
 
 data.joined.training <- sample_frac(data.joined, .75)
 data.joined.testing <- sample_frac(data.joined, .5)
+
 ```
 
 
@@ -62,6 +68,8 @@ Rebuild your logistic regression model from the previous week, this time using t
 
 Show all work.
 
+
+### Train the Model using CARET
 ```{r logistic model}
 # Your Work Here
 
@@ -80,7 +88,7 @@ glmFit <- train(arrival_delayed ~ dep_delay + dest + origin + year + month + day
 
 ```
 
-
+### Model Performance
 ```{r}
 
 pred <- as.vector(ifelse(predict(glmFit, newdata=data.joined, type="prob")[,"1"]<.5, 0, 1))
@@ -91,6 +99,7 @@ confusionMatrix(pred, data.joined.testing$arrival_delayed)
 
 ```
 
+### Plot the ROC Curve
 ```{r}
 library(pROC)
 probsTrain <- predict(glmFit, data.joined.training, type = "prob")
@@ -118,10 +127,38 @@ Show and describe all work
 
 ```{r rpart model}
 # Your Work Here
+
+fitControl <- trainControl(method = "cv", number = 2)
+
+rpartFit <- train(arrival_delayed ~ dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined, method = "rpart", trControl = fitControl)
+
+
+
+
+```
+
+### Model Performance
+
+```{r}
+pred <- as.vector(ifelse(predict(rpartFit, newdata=data.joined, type="prob")[,"1"]<.5, 0, 1))
+probsTest <- predict(rpartFit, data.joined.testing, type = "prob")
+pred      <- factor( ifelse(probsTest[, "1"] > 0.5, "1", "0") )
+confusionMatrix(pred, data.joined.testing$arrival_delayed)
+```
+
+
+### Decision Tree Plot
+```{r}
+library(rpart.plot)
+
+
+rpart.plot(rpartFit$finalModel)
 ```
 
 
 ### Questions:
 
 - Discuss the difference between the models and why you would use one model over the other?
-- How might you produce an ROC type curve for the *rpart* model? 
+
+
+The Decision Tree Model is not any particularly better than the Logistic Regression. 
