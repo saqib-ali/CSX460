@@ -1,10 +1,10 @@
 ---
-title: "Caret / Recursive Partitioning"
-author: 'Saqib Ali  '
+title: "Recursive Partitioning / Decision Trees using CARET"
+author: "Saqib Ali"
 date: "May 16th, 2017"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r init, warning=FALSE, echo=FALSE, message=FALSE}
@@ -69,7 +69,7 @@ Rebuild your logistic regression model from the previous week, this time using t
 Show all work.
 
 
-### Train the Model using CARET
+### Train the Linear Regression Model using CARET
 ```{r logistic model}
 # Your Work Here
 
@@ -82,6 +82,7 @@ Show all work.
 fitControl <- trainControl(method = "cv", number = 2)
 
 glmFit <- train(arrival_delayed ~ dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined, method = "glm", trControl = fitControl)
+
 
 
 
@@ -161,4 +162,4 @@ rpart.plot(rpartFit$finalModel)
 - Discuss the difference between the models and why you would use one model over the other?
 
 
-The Decision Tree Model is not any particularly better than the Logistic Regression. 
+Logistic Regression performed better than Decision Trees.

@@ -1,0 +1,147 @@
+---
+title: "Improving Model Perfromance / Tuning Parameters"
+author: "Saqib Ali"
+date: '`r Sys.Date()`'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r init, warning=FALSE, echo=FALSE, message=FALSE}
+library(rpart)
+library(caret)
+library(data.table)
+library(magrittr)
+library(dplyr)
+
+
+# .. Additional libraries
+```
+
+
+## Load the data
+
+```{r}
+data.joined <- readRDS(file="/home/saqib/ml_at_berkeley/CSX460/04-logistic-regression/04-exercise-nycflights-logistic/flightdata.Rda")
+
+
+```
+
+
+## Add a categorical variable for  arr_delay >= 22 minutes. It is called arrival_delayed  
+
+```{r}
+data.joined$arrival_delayed <- factor(ifelse(data.joined$arr_delay >= 22, 1,0))
+
+
+
+```
+
+
+
+## Filter out rows with NAs for arrival_delayed
+
+```{r}
+
+data.joined <- data.joined  %>% filter(!is.na(arrival_delayed))   
+data.joined.training <- sample_frac(data.joined, .1)
+data.joined.testing <- sample_frac(data.joined, .1)
+
+#data.joined <- data.joined[, speed:=NULL]
+```
+
+
+## Tuning Parameter
+
+Generically and regardless of model type, what are the purposes of a model
+tuning parameters?
+
+```
+```
+
+## Caret Models
+
+This assignment demonstrates the use of caret for constructing models. Each
+model should be built and compared using using `Kappa` as the performance
+metric calculated using 10-fold repeated cross-validation with 3 folds.
+
+Using the rectangular data that you created for the NYCFlights to create a model
+for arr_delay >= 15 minutes.
+
+- glm
+- rpart
+- knn
+- C50
+- randomForest
+- adaBoost
+- Two methods of your choice from the Caret Model List (you will need to install any dependencies)
+
+Save the caret objects with the names provided.
+
+```{r}
+
+# Your work here
+
+fitControl <- trainControl(method = "cv", number = 2)
+
+fit.glm <- train(arrival_delayed ~ dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined.training, method = "glm", trControl = fitControl)
+
+fit.knn <- train(arrival_delayed ~ dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined, method = "knn", trControl = fitControl)
+
+fit.rpart <- train(arrival_delayed ~ dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined.training, method = "rpart", trControl = fitControl)
+
+fit.rf <- train(arrival_delayed ~ dep_delay + dest + origin + year + month + day + hour + sched_dep_time + sched_arr_time + carrier + distance + year.pl + type  + engines + seats + engine + temp + dewp + humid + wind_dir + wind_speed + wind_gust +precip + pressure + visib + lat + lon + alt + tz  + lat.dest + lon.dest + alt.dest + tz.dest, data=data.joined.training, method = "rf", trControl = fitControl)
+
+```
+
+
+
+## GLM
+```{r}
+pred <- as.vector(ifelse(predict(fit.glm, newdata=data.joined, type="prob")[,"1"]<.5, 0, 1))
+probsTest <- predict(fit.glm, data.joined.testing, type = "prob")
+pred      <- factor( ifelse(probsTest[, "1"] > 0.5, "1", "0") )
+confusionMatrix(pred, data.joined.testing$arrival_delayed)
+
+```
+
+
+## KNN
+
+```{r}
+pred <- as.vector(ifelse(predict(fit.knn, newdata=data.joined, type="prob")[,"1"]<.5, 0, 1))
+probsTest <- predict(fit.knn, data.joined.testing, type = "prob")
+pred      <- factor( ifelse(probsTest[, "1"] > 0.5, "1", "0") )
+confusionMatrix(pred, data.joined.testing$arrival_delayed)
+
+```
+
+
+## rpart
+
+
+```{r}
+pred <- as.vector(ifelse(predict(fit.rpart, newdata=data.joined, type="prob")[,"1"]<.5, 0, 1))
+probsTest <- predict(fit.rpart, data.joined.testing, type = "prob")
+pred      <- factor( ifelse(probsTest[, "1"] > 0.5, "1", "0") )
+confusionMatrix(pred, data.joined.testing$arrival_delayed)
+
+```
+
+## Random Forest 
+
+```{r}
+pred <- as.vector(ifelse(predict(fit.rf, newdata=data.joined, type="prob")[,"1"]<.5, 0, 1))
+probsTest <- predict(fit.rf, data.joined.testing, type = "prob")
+pred      <- factor( ifelse(probsTest[, "1"] > 0.5, "1", "0") )
+confusionMatrix(pred, data.joined.testing$arrival_delayed)
+
+```
+
+
+Compare the  models?
+
+Which is best?  Why?
+
+```
+```
