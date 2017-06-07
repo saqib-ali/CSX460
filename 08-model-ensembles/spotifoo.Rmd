@@ -1,8 +1,10 @@
 ---
 title: "Customer Lifetime Value"
-author: "Christopher Brown"
-date: "May 2, 2016"
-output: html_document
+author: "Saqib Ali"
+date: "June 5, 2017"
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 You work as an analyst for *Spotifoo*, an online music streaming service. Spotifoo charges its customers a low fixed rate to stream music online. In addition to a monthly subscription fee, *Spotifoo* allows its customers to purchase products and services mentioned using the *Spotifoo* app. Some customers make no additional purchase besides the monthly subscriptions fee. Other make regular purchases.  
@@ -26,5 +28,11 @@ For each management question, describe your process. In particular, describe:
 - the modeling techniques you would use
 
 # Who Are *Spotifoo*'s best customers?
+The Best Customers are who SPEND the most in purchasing addition items
 
 # Customer Lifetime Value
+The response will be Catogerical Variable of the Binned [Sum of [item purchased * the cost of the item]]. For e.g. Total Spend > 100 = Excellent; Total Spend > 50 < 100 = Good etc. 
+
+The predictors to use in this Model would be the Demographics of the Customer, Location
+
+We would start with a Logistic Regression and compare the results with KNN, Random Forest and GLM
