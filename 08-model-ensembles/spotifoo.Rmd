@@ -4,11 +4,11 @@ author: "Saqib Ali"
 date: "June 5, 2017"
 output:
   pdf_document: default
-  html_document: default
+  html_document: defaultam music online. In addition to a monthly subscription fee, *Spotifoo* allows its customers to purchase products and services mentioned using the *Spotifoo* app. Some customers make no additional purchase besides the monthly subscriptions fee. Other make regular purchases.  
+
 ---
 
-You work as an analyst for *Spotifoo*, an online music streaming service. Spotifoo charges its customers a low fixed rate to stream music online. In addition to a monthly subscription fee, *Spotifoo* allows its customers to purchase products and services mentioned using the *Spotifoo* app. Some customers make no additional purchase besides the monthly subscriptions fee. Other make regular purchases.  
-
+You work as an analyst for *Spotifoo*, an online music streaming service. Spotifoo charges its customers a low fixed rate to stre
 Management wants to:
 
 1. understand who their best customers are.
@@ -31,8 +31,11 @@ For each management question, describe your process. In particular, describe:
 The Best Customers are who SPEND the most in purchasing addition items
 
 # Customer Lifetime Value
+## Response Variable / Dependent Variable
 The response will be Catogerical Variable of the Binned [Sum of [item purchased * the cost of the item]]. For e.g. Total Spend > 100 = Excellent; Total Spend > 50 < 100 = Good etc. 
 
+## Predictors
 The predictors to use in this Model would be the Demographics of the Customer, Location
 
-We would start with a Logistic Regression and compare the results with KNN, Random Forest and GLM
+## Model Selection
+With our Response Variable being a Categorical Variable this is Classification Problem. I would start with a Logistic Regression and compare the results with KNN, Random Forest and GLM
