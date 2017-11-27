@@ -72,10 +72,10 @@ library(InformationValue)
 library(data.table)
 
 
-flightsDT  <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv") 
-planesDT   <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")  %>% setkey(tailnum)
-airportsDT <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")  %>% setkey(faa) 
-weatherDT  <- fread("~/ml_at_berkeley/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv") %>%   setkey(origin,year,month,day,hour)
+flightsDT  <- fread("~/datascience/CSX460/02-building-blocks/02-exercise-nycflights/data/flights.csv") 
+planesDT   <- fread("~/datascience/CSX460/02-building-blocks/02-exercise-nycflights/data/planes.csv")  %>% setkey(tailnum)
+airportsDT <- fread("~/datascience/CSX460/02-building-blocks/02-exercise-nycflights/data/airports.csv")  %>% setkey(faa) 
+weatherDT  <- fread("~/datascience/CSX460/02-building-blocks/02-exercise-nycflights/data/weather.csv") %>%   setkey(origin,year,month,day,hour)
 
 
 
@@ -145,7 +145,11 @@ data.joined <- data.joined  %>%
   filter(!is.na(lat.dest))   %>% 
   filter(!is.na(lon.dest))   %>% 
   filter(!is.na(alt.dest))   %>%
-  filter(!is.na(tz.dest)) 
+  filter(!is.na(tz.dest))  %>% 
+  filter(!is.na(arrival_delayed))   
+
+
+saveRDS(data.joined, "/home/saqib/datascience/CSX460/04-logistic-regression/04-exercise-nycflights-logistic/flightdata.Rda")
 ```
 
 ## Create Training and Test Samples
